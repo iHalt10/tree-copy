@@ -1,0 +1,33 @@
+#!/bin/bash
+#
+# main
+# by Takeaki Oura(@iHalt10)
+set -u
+
+if [ -L "$0" ]; then
+  SRC_FILE="$(ls -l "$0" | awk '{print $11}')"
+else
+  SRC_FILE="$0"
+fi
+
+source "$(cd "$(dirname "${SRC_FILE}")" || exit 2; pwd -P)/shellutils.sh"
+
+import log.sh
+import options.sh
+import files.sh
+
+function main() {
+  log::disable_debug
+
+  options::parser "$@"
+
+  files::load_global_ignore_list
+  ${options__IS_DRY_RUN} && files::enable_dry_run
+  ${options__IS_FILTER_INCLUDE} && files::set_filter_include "${options__FILTER_INCLUDE_LIST_STR}"
+  ${options__IS_FILTER_EXCLUDE} && files::set_filter_exclude "${options__FILTER_EXCLUDE_LIST_STR}"
+  files::check_dist_dir "${options__DIST_DIR}" "${options__IS_CREATE_DIST_DIR}"
+  files::create_list "${options__SRC_DIR}" "${options__MAXDEPTH}"
+  files::sort "${options__SORT_TYPE}"
+  files::copies "${options__NAMEING_TYPE}" "${options__DIST_DIR}" "${options__IS_DELETE_SRC_FILE}"
+}
+main "$@"
